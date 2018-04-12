@@ -1,13 +1,16 @@
-"""Player in the game.
+"""Manages players in the game.
 
-This module manages all aspects of players in the game.
+This module manages all aspects of players in the game from movement to drawing.
 """
 
-from typing import Optional
+from typing import Optional, Tuple
+
+import pygame
+import pygame.gfxdraw
 
 
 class Position:
-    """A position object.
+    """Represents a position in the game with x- and y- coordinates.
     """
     x: float
     y: float
@@ -47,7 +50,7 @@ class Position:
 
 
 class Bounds:
-    """Bounds for x, y.
+    """Bounds for a player that has methods to restrict positioning.
     """
     x_max: Optional[float]
     x_min: Optional[float]
@@ -68,8 +71,9 @@ class Bounds:
         self.y_max = y_max
         self.y_min = y_min
 
-    def bound_position(self, position: Position) -> None:
-        """Bound the given position using this bounding object in place.
+    def bound_position(self, position: Position, padding: int) -> None:
+        """Bound the given <position> using this bounding object in place, with the given <padding> on any side
+        of the position.
         """
         # Adjust x and y in position to inside of the bounds
         if position.x < self.x_min:
@@ -110,15 +114,58 @@ class Bounds:
 class Player:
     """A player in the game.
     """
+    color: pygame.Color = pygame.Color("white")
+
     damage: int
     health: int
     speed: int
+    radius: int
+
     position: Position
     bounds: Bounds
 
-    def __init__(self, damage: int, speed: int, position: Optional[Position]) -> None:
-        """Initializes a new player with the given damage, speed, and starting position.
+    def __init__(self, damage: int, speed: int, radius: int) -> None:
+        """Initializes a new player with the given <damage>, <speed>, and <radius>.
         """
         self.damage = damage
         self.speed = speed
-        self.position = position if position else Position(0, 0)
+        self.radius = radius
+        self.position = Position(0, 0)
+        self.bounds = Bounds()
+
+    def _update_position(self, x: Optional[float] = None, y: Optional[float] = None) -> None:
+        """Updates the position of this player while satisfying bounds.
+        """
+        if x is None:
+            x = self.position.x
+        if y is None:
+            y = self.position.y
+
+        self.position.x = x
+        self.position.y = y
+        self.bounds.bound_position(self.position, self.radius)
+
+    def set_position(self, position: Position) -> None:
+        """Sets the position of this player.
+        """
+        self._update_position(position.x, position.y)
+
+    def set_bounds(self, bounds: Bounds) -> None:
+        """Sets the bounds of this player.
+        """
+        self.bounds = bounds
+        self._update_position()
+
+    def move(self, raw_input: Tuple[float, float], delta_time: float) -> None:
+        """Move the player in the direction specified by the <raw_input> and with the given <delta_time> modifier.
+
+        The <raw_input> is a tuple of (x, y) input floats. The delta time is the time since the last frame update.
+        """
+        self._update_position(self.speed * delta_time * raw_input[0],
+                              self.speed * delta_time * raw_input[1])
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draws the player to the given <surface>.
+        """
+        pos = round(self.position)
+        pygame.gfxdraw.circle(surface, pos.x, pos.y, self.radius, self.color)
