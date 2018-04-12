@@ -7,7 +7,8 @@ from typing import Optional
 
 
 class Position:
-    """"""
+    """A position object.
+    """
     x: float
     y: float
 
@@ -25,28 +26,29 @@ class Position:
     def __eq__(self, other: object) -> bool:
         """Returns whether or not two position objects are equal.
         """
-        # TODO: implement
-        pass
+        if not type(self) == type(other):
+            return False
+        other: Position
+        return other.x == self.x and other.y == self.y
 
     def __str__(self) -> str:
         """Return a human-readable representation of this position object.
 
         In the form ```Position (<x>, <y>)```.
         """
-        # TODO: implement
-        pass
+        return "Position({}, {})".format(str(self.x), str(self.y))
 
     def __repr__(self) -> str:
         """Return a mechanical representation of this position object.
 
         In the form ```<nshoot.player.Position (x=<x>, y=<y>)>```.
         """
-        # TODO: implement
-        pass
+        return "<nshoot.player.Position (x={}, y={})>".format(str(self.x), str(self.y))
 
 
 class Bounds:
-    """"""
+    """Bounds for x, y.
+    """
     x_max: Optional[float]
     x_min: Optional[float]
     y_max: Optional[float]
@@ -69,31 +71,40 @@ class Bounds:
     def bound_position(self, position: Position) -> None:
         """Bound the given position using this bounding object in place.
         """
-        # TODO: implement
-        pass
+        # Adjust x and y in position to inside of the bounds
+        if position.x < self.x_min:
+            position.x = self.x_min
+        elif position.x > self.x_max:
+            position.x = self.x_max
+        if position.y < self.y_min:
+            position.y = self.y_min
+        elif position.y > self.y_max:
+            position.y = self.y_max
 
     def __eq__(self, other: object) -> bool:
         """Returns whether or not two bounds objects are equal.
         """
-        # TODO: implement
-        pass
+        if not type(self) == type(other):
+            return False
+        other: Bounds
+        return (self.x_max == other.x_max and self.x_min == other.x_min
+                and self.y_max == other.y_max and self.y_min == other.y_min)
 
     def __str__(self) -> str:
         """Return a human-readable representation of this bounds object.
 
         In the form ```Bounds (<x_min> - <x_max>, <y_min> - <y_max>)```.
         """
-        # TODO: implement
-        pass
+        return "Bounds ({} - {}, {} - {})".format(str(self.x_min), str(self.x_max),
+                                                  str(self.y_min), str(self.y_max))
 
     def __repr__(self) -> str:
         """Return a mechanical representation of this bounds object.
 
-        In the form ```<nshoot.player.Bounds (x=<x_min>-<x_max>, y=<y_min>-<y_max>)>```.
+        In the form ```<nshoot.player.Bounds (x:<x_min>-<x_max>, y:<y_min>-<y_max>)>```.
         """
-        # TODO: implement
-        pass
-
+        return "<nshoot.player.Bounds (x:{}-{}, y:{}-{})>".format(str(self.x_min), str(self.x_max),
+                                                                  str(self.y_min), str(self.y_max))
 
 
 class Player:
