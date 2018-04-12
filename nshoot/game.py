@@ -4,8 +4,11 @@ This module manages interaction of the user with the game, including viewing and
 """
 from typing import List, Tuple
 
+import sys
+
 import pygame
 from nshoot.player import Player, Bounds, Position
+
 
 class Game:
     """A game instance that controls all underlying aspects of the game including simulation.
@@ -29,11 +32,6 @@ class Game:
             player.set_position(position)
 
             self.players.append(player)
-
-    def update(self, delta_time: float) -> None:
-        """Updates the game with the given <delta_time> which is the time elapsed since the last frame in seconds.
-        """
-        pass
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws all objects in this game to the given <surface>.
@@ -71,10 +69,18 @@ class GameView:
             since_last_refresh += delta_time
             self.clock.tick()
 
-            self.game.update(delta_time)
+            self.update(delta_time)
             if since_last_refresh > 1 / self.REFRESH_RATE:
                 self.refresh()
                 since_last_refresh = 0
+
+    def update(self, delta_time: float) -> None:
+        """Updates the game with the given <delta_time> which is the time elapsed since the last frame in seconds.
+        """
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+        pass
 
     def refresh(self) -> None:
         """Refreshes the display to redraw everything.
