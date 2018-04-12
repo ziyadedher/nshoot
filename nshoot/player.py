@@ -6,7 +6,6 @@ This module manages all aspects of players in the game from movement to drawing.
 from typing import Optional, Tuple
 
 import pygame
-import pygame.gfxdraw
 
 
 class Position:
@@ -62,9 +61,14 @@ class Bounds:
                  y_max: Optional[float] = None, y_min: Optional[float] = None) -> None:
         """Initialize a bounds object with the given bounds. Only keyword arguments are accepted.
         """
-        if x_min > x_max or y_min > y_max:
-            # TODO: handle invalid bounds
-            pass
+        if x_min is not None and x_max is not None:
+            if x_min > x_max:
+                # TODO: handle invalid bounds
+                pass
+        if y_min is not None and y_max is not None:
+            if y_min > y_max:
+                # TODO: handle invalid bounds
+                pass
 
         self.x_max = x_max
         self.x_min = x_min
@@ -75,15 +79,22 @@ class Bounds:
         """Bound the given <position> using this bounding object in place, with the given <padding> on any side
         of the position.
         """
-        # Adjust x and y in position to inside of the bounds
-        if position.x < self.x_min:
-            position.x = self.x_min
-        elif position.x > self.x_max:
-            position.x = self.x_max
-        if position.y < self.y_min:
-            position.y = self.y_min
-        elif position.y > self.y_max:
-            position.y = self.y_max
+        if self.x_min:
+            x_min_padding = self.x_min - padding
+            if position.x < x_min_padding:
+                position.x = x_min_padding
+        if self.x_max:
+            x_max_padding = self.x_max + padding
+            if position.x > x_max_padding:
+                position.x = x_max_padding
+        if self.y_min:
+            y_min_padding = self.y_min + padding
+            if position.y < y_min_padding:
+                position.y = y_min_padding
+        if self.y_max:
+            y_max_padding = self.y_max - padding
+            if position.y > y_max_padding:
+                position.y = y_max_padding
 
     def __eq__(self, other: object) -> bool:
         """Returns whether or not two bounds objects are equal.
@@ -159,7 +170,8 @@ class Player:
     def move(self, raw_input: Tuple[float, float], delta_time: float) -> None:
         """Move the player in the direction specified by the <raw_input> and with the given <delta_time> modifier.
 
-        The <raw_input> is a tuple of (x, y) input floats. The delta time is the time since the last frame update.
+        The <raw_input> is a tuple of (x, y) input floats. The <delta_time> is the time in seconds
+        since the last frame update.
         """
         self._update_position(self.speed * delta_time * raw_input[0],
                               self.speed * delta_time * raw_input[1])
@@ -168,4 +180,4 @@ class Player:
         """Draws the player to the given <surface>.
         """
         pos = round(self.position)
-        pygame.gfxdraw.circle(surface, pos.x, pos.y, self.radius, self.color)
+        pygame.draw.circle(surface, self.color, (pos.x, pos.y), self.radius)
