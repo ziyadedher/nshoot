@@ -79,19 +79,19 @@ class Bounds:
         """Bound the given <position> using this bounding object in place, with the given <padding> on any side
         of the position.
         """
-        if self.x_min:
-            x_min_padding = self.x_min - padding
+        if self.x_min is not None:
+            x_min_padding = self.x_min + padding
             if position.x < x_min_padding:
                 position.x = x_min_padding
-        if self.x_max:
-            x_max_padding = self.x_max + padding
+        if self.x_max is not None:
+            x_max_padding = self.x_max - padding
             if position.x > x_max_padding:
                 position.x = x_max_padding
-        if self.y_min:
+        if self.y_min is not None:
             y_min_padding = self.y_min + padding
             if position.y < y_min_padding:
                 position.y = y_min_padding
-        if self.y_max:
+        if self.y_max is not None:
             y_max_padding = self.y_max - padding
             if position.y > y_max_padding:
                 position.y = y_max_padding
@@ -173,8 +173,8 @@ class Player:
         The <raw_input> is a tuple of (x, y) input floats. The <delta_time> is the time in seconds
         since the last frame update.
         """
-        self._update_position(self.speed * delta_time * raw_input[0],
-                              self.speed * delta_time * raw_input[1])
+        self._update_position(self.position.x + self.speed * delta_time * raw_input[0],
+                              self.position.y + self.speed * delta_time * raw_input[1])
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws the player to the given <surface>.
