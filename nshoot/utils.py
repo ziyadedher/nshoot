@@ -3,7 +3,7 @@
 This module consists of utility classes to aid the main game classes.
 """
 
-from typing import Optional, Tuple
+from typing import Optional
 
 from enum import Enum
 

@@ -9,6 +9,7 @@ import time
 
 import pygame
 from nshoot import config
+from nshoot.strategy import Strategy
 from nshoot.utils import Position, Direction, Bounds
 
 
@@ -77,11 +78,13 @@ class Player(Element):
     last_shot_time: float
     position: Position
     bounds: Bounds
+    strategy: Strategy
 
     color: pygame.Color
 
-    def __init__(self, damage: int, speed: int, max_health: int, firerate: int) -> None:
-        """Initializes a new player with the given <damage>, <speed>, <max_health> and <firerate>.
+    def __init__(self, damage: int, speed: int, max_health: int, firerate: int, strategy: Strategy) -> None:
+        """Initializes a new player with the given <damage>, <speed>, <max_health> and <firerate>. Can also take a
+        <strategy> that determines how the player will play.
         """
         self.damage = damage
         self.max_health = max_health
@@ -93,8 +96,14 @@ class Player(Element):
         self.last_shot_time = time.time()
         self.position = Position(0, 0)
         self.bounds = Bounds()
+        self.strategy = strategy
 
         self.color = pygame.Color(self.BASE_COLOR.r, self.BASE_COLOR.g, self.BASE_COLOR.b, self.BASE_COLOR.a)
+
+    def get_info(self) -> tuple:
+        """Gets all information about this player.
+        """
+        return self.position,
 
     def _update_position(self, x: Optional[float] = None, y: Optional[float] = None) -> None:
         """Updates the position of this player while satisfying bounds.
@@ -144,7 +153,6 @@ class Player(Element):
         """
         self.health -= bullet.damage
         if self.health <= 0:
-            # TODO: dead
             self.health = 0
 
         health_percent = self.health / self.max_health
@@ -153,6 +161,10 @@ class Player(Element):
         self.color.b = int(self.HURT_COLOR.b + health_percent * (self.BASE_COLOR.b - self.HURT_COLOR.b))
         self.color.a = int(self.HURT_COLOR.a + health_percent * (self.BASE_COLOR.a - self.HURT_COLOR.a))
 
+    def is_dead(self) -> bool:
+        """Returns whether or not this player is dead.
+        """
+        return self.health <= 0
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws the player to the given <surface>.
