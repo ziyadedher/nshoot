@@ -6,7 +6,7 @@ This module manages all aspects of players in the game from movement to drawing.
 from typing import Optional, Tuple
 
 import pygame
-
+from nshoot import config
 from nshoot.utils import Position, Direction, Bounds
 
 
@@ -27,13 +27,15 @@ class Bullet(Element):
 
     direction: Direction
     position: Position
+    damage: int
     speed: int
 
-    def __init__(self, origin: Position, direction: Direction, speed: int = 800) -> None:
+    def __init__(self, origin: Position, direction: Direction, damage: int, speed: int = 800) -> None:
         """Initializes a bullet travelling from an <origin> in a given <direction> at a given <speed>.
         """
         self.position = origin
         self.direction = direction
+        self.damage = damage
         self.speed = speed
 
     def move(self, delta_time: float) -> None:
@@ -41,6 +43,13 @@ class Bullet(Element):
         """
         self.position.x += self.speed * delta_time * self.direction.value[0]
         self.position.y += self.speed * delta_time * self.direction.value[1]
+
+    def out_of_bounds(self) -> bool:
+        """Returns whether or not this bullet is out of bounds of the screen.
+        """
+        x_out = self.position.x > config.WIDTH or self.position.x < 0
+        y_out = self.position.y > config.HEIGHT or self.position.y < 0
+        return x_out or y_out
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws the bullet to the given <surface>.
@@ -62,10 +71,11 @@ class Player(Element):
     position: Position
     bounds: Bounds
 
-    def __init__(self, damage: int, speed: int) -> None:
-        """Initializes a new player with the given <damage> and <speed>.
+    def __init__(self, damage: int, speed: int, health: int) -> None:
+        """Initializes a new player with the given <damage>, <speed>, and <health>.
         """
         self.damage = damage
+        self.health = health
         self.speed = speed
         self.position = Position(0, 0)
         self.bounds = Bounds()
@@ -105,9 +115,14 @@ class Player(Element):
     def shoot(self, direction: Direction) -> Bullet:
         """Shoots a bullet in the given <direction> and returns the shot bullet.
         """
-        origin = Position(self.position.x + direction.value[0] * self.RADIUS,
-                          self.position.y + direction.value[1] * self.RADIUS)
-        return Bullet(origin, direction)
+        origin = Position(self.position.x + direction.value[0] * (self.RADIUS + Bullet.RADIUS + 1),
+                          self.position.y + direction.value[1] * (self.RADIUS + Bullet.RADIUS + 1))
+        return Bullet(origin, direction, self.damage)
+
+    def hit(self, bullet: Bullet) -> None:
+        """Registers a hit on this player by the given <bullet>.
+        """
+        self.health -= bullet.damage
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws the player to the given <surface>.

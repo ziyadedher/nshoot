@@ -5,8 +5,10 @@ This module manages interaction of the user with the game, including viewing and
 from typing import List, Tuple, Optional
 
 import sys
+import math
 
 import pygame
+from nshoot import config
 from nshoot.elements import Player, Bullet
 from nshoot.utils import Position, Bounds, Direction
 
@@ -14,18 +16,22 @@ from nshoot.utils import Position, Bounds, Direction
 class Game:
     """A game instance that controls all underlying aspects of the game including simulation.
     """
-    NUM_PLAYERS: int = 2
+    num_players: int
     players: List[Player]
     bullets: List[Bullet]
 
-    def __init__(self):
-        """Initializes this game instance.
+    def __init__(self, num_players: int = config.NUM_PLAYERS, stats: Optional[List[Tuple[int, int]]] = None):
+        """Initializes this game instance with the given number of players <num_players>
+        and the attributes of each player in a list of tuples of damage by speed <stats>.
         """
+        self.num_players = num_players
         self.players = []
         self.bullets = []
 
-        for _ in range(self.NUM_PLAYERS):
-            player = Player(10, 400)
+        stats = stats + [config.DEFAULT_STATS] * (num_players - len(stats))\
+            if stats else [config.DEFAULT_STATS] * num_players
+        for i in range(self.num_players):
+            player = Player(*stats[i])
 
             screen_size = pygame.display.get_surface().get_size()
             bounds = Bounds(x_max=screen_size[1], x_min=0, y_max=screen_size[0], y_min=0)
@@ -36,27 +42,44 @@ class Game:
 
             self.players.append(player)
 
+    def _register_hits(self) -> None:
+        """Registers hits from all bullets.
+        """
+        dead_bullets = []
+        for bullet in self.bullets:
+            if bullet.out_of_bounds():
+                dead_bullets.append(bullet)
+                continue
+
+            for player in self.players:
+                dist = math.hypot(player.position.x - bullet.position.x, player.position.y - bullet.position.y)
+                if dist <= player.RADIUS + bullet.RADIUS:
+                    player.hit(bullet)
+                    dead_bullets.append(bullet)
+                    break
+        for bullet in dead_bullets:
+            self.bullets.remove(bullet)
+
     def update(self, delta_time: float,
                move_inputs: List[Tuple[float, float]],
                shoot_inputs: List[Optional[Direction]]) -> None:
         """Update the game based on the given <delta_time>.
         Also <move_inputs> and <shoot_inputs> corresponding to each player.
         """
-        for _ in range(self.NUM_PLAYERS - len(move_inputs)):
+        for _ in range(self.num_players - len(move_inputs)):
             move_inputs.append((0.0, 0.0))
-        for _ in range(self.NUM_PLAYERS - len(shoot_inputs)):
+        for _ in range(self.num_players - len(shoot_inputs)):
             shoot_inputs.append(None)
 
         for i, player in enumerate(self.players):
             player.move(move_inputs[i], delta_time)
             if shoot_inputs[i] is not None:
                 self.bullets.append(player.shoot(shoot_inputs[i]))
-
         for bullet in self.bullets:
             bullet.move(delta_time)
-            if (bullet.position.x > pygame.display.get_surface().get_width() or bullet.position.x < 0
-                    or bullet.position.y > pygame.display.get_surface().get_height() or bullet.position.y < 0):
-                    self.bullets.remove(bullet)
+
+        self._register_hits()
+
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws all objects in this game to the given <surface>.
@@ -70,11 +93,6 @@ class Game:
 class GameView:
     """A game view which controls all displaying and interaction with the game.
     """
-    MOVE_SOURCES: List[Tuple[int, int, int, int]] = [(pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s)]
-    SHOOT_SOURCES: List[Tuple[int, int, int, int]] = [(pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN)]
-    USER_PLAYERS: int = 2
-
-    REFRESH_RATE: int = 60
     COLOR: pygame.Color = pygame.Color('cadetblue4')
 
     surface: pygame.Surface
@@ -108,7 +126,7 @@ class GameView:
             self.clock.tick()
 
             self.update(delta_time)
-            if since_last_refresh > 1 / self.REFRESH_RATE:
+            if since_last_refresh > 1 / config.REFRESH_RATE:
                 self.refresh()
                 since_last_refresh = 0
 
@@ -120,7 +138,7 @@ class GameView:
                 sys.exit()
 
         move_inputs, shoot_inputs = self.get_user_input()
-        self.game.update(delta_time, move_inputs[:self.USER_PLAYERS], shoot_inputs[:self.USER_PLAYERS])
+        self.game.update(delta_time, move_inputs[:config.USER_PLAYERS], shoot_inputs[:config.USER_PLAYERS])
 
     def refresh(self) -> None:
         """Refreshes the display to redraw everything.
@@ -135,7 +153,7 @@ class GameView:
         pressed = pygame.key.get_pressed()
 
         move_inputs = []
-        for source in self.MOVE_SOURCES:
+        for source in config.MOVE_SOURCES:
             source_input = [0.0, 0.0]
             if pressed[source[0]]:
                 source_input[0] -= 1
@@ -150,7 +168,7 @@ class GameView:
             move_inputs.append((joystick.get_axis(0), joystick.get_axis(1)))
 
         shoot_inputs = []
-        for source in self.SHOOT_SOURCES:
+        for source in config.SHOOT_SOURCES:
             if pressed[source[0]]:
                 shoot_inputs.append(Direction.WEST)
                 continue
