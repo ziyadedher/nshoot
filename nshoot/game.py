@@ -41,7 +41,6 @@ class Game:
         for i, player in enumerate(self.players):
             player.move(raw_inputs[i], delta_time)
 
-
     def draw(self, surface: pygame.Surface) -> None:
         """Draws all objects in this game to the given <surface>.
         """
@@ -57,7 +56,7 @@ class GameView:
     USER_PLAYERS: int = 2
 
     REFRESH_RATE: int = 60
-    COLOR: pygame.Color = pygame.Color("black")
+    COLOR: pygame.Color = pygame.Color('cadetblue4')
 
     surface: pygame.Surface
     clock: pygame.time.Clock

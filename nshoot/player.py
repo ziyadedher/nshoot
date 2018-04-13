@@ -125,7 +125,7 @@ class Bounds:
 class Player:
     """A player in the game.
     """
-    color: pygame.Color = pygame.Color("white")
+    color: pygame.Color = pygame.Color("cornsilk")
 
     damage: int
     health: int
