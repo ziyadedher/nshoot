@@ -46,6 +46,7 @@ class Game:
         """Registers hits from all bullets.
         """
         dead_bullets = []
+
         for bullet in self.bullets:
             if bullet.out_of_bounds():
                 dead_bullets.append(bullet)
@@ -57,6 +58,7 @@ class Game:
                     player.hit(bullet)
                     dead_bullets.append(bullet)
                     break
+
         for bullet in dead_bullets:
             self.bullets.remove(bullet)
 
@@ -74,12 +76,13 @@ class Game:
         for i, player in enumerate(self.players):
             player.move(move_inputs[i], delta_time)
             if shoot_inputs[i] is not None:
-                self.bullets.append(player.shoot(shoot_inputs[i]))
+                bullet = player.shoot(shoot_inputs[i])
+                if bullet is not None:
+                    self.bullets.append(bullet)
         for bullet in self.bullets:
             bullet.move(delta_time)
 
         self._register_hits()
-
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws all objects in this game to the given <surface>.

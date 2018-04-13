@@ -5,6 +5,8 @@ This module manages all aspects of players in the game from movement to drawing.
 
 from typing import Optional, Tuple
 
+import time
+
 import pygame
 from nshoot import config
 from nshoot.utils import Position, Direction, Bounds
@@ -30,7 +32,7 @@ class Bullet(Element):
     damage: int
     speed: int
 
-    def __init__(self, origin: Position, direction: Direction, damage: int, speed: int = 800) -> None:
+    def __init__(self, origin: Position, direction: Direction, damage: int, speed: int) -> None:
         """Initializes a bullet travelling from an <origin> in a given <direction> at a given <speed>.
         """
         self.position = origin
@@ -61,24 +63,38 @@ class Bullet(Element):
 class Player(Element):
     """A player in the game.
     """
-    COLOR: pygame.Color = pygame.Color("cornsilk")
+    BASE_COLOR: pygame.Color = pygame.Color("cornsilk")
+    HURT_COLOR: pygame.Color = pygame.Color("indianred")
     RADIUS: int = 15
 
     damage: int
+    max_health: int
     health: int
-    speed: int
 
+    speed: int
+    firerate: int
+
+    last_shot_time: float
     position: Position
     bounds: Bounds
 
-    def __init__(self, damage: int, speed: int, health: int) -> None:
-        """Initializes a new player with the given <damage>, <speed>, and <health>.
+    color: pygame.Color
+
+    def __init__(self, damage: int, speed: int, max_health: int, firerate: int) -> None:
+        """Initializes a new player with the given <damage>, <speed>, <max_health> and <firerate>.
         """
         self.damage = damage
-        self.health = health
+        self.max_health = max_health
+        self.health = self.max_health
+
         self.speed = speed
+        self.firerate = firerate
+
+        self.last_shot_time = time.time()
         self.position = Position(0, 0)
         self.bounds = Bounds()
+
+        self.color = pygame.Color(self.BASE_COLOR.r, self.BASE_COLOR.g, self.BASE_COLOR.b, self.BASE_COLOR.a)
 
     def _update_position(self, x: Optional[float] = None, y: Optional[float] = None) -> None:
         """Updates the position of this player while satisfying bounds.
@@ -112,20 +128,34 @@ class Player(Element):
         self._update_position(self.position.x + self.speed * delta_time * raw_input[0],
                               self.position.y + self.speed * delta_time * raw_input[1])
 
-    def shoot(self, direction: Direction) -> Bullet:
+    def shoot(self, direction: Direction) -> Optional[Bullet]:
         """Shoots a bullet in the given <direction> and returns the shot bullet.
         """
+        if time.time() < self.last_shot_time + (1 / self.firerate):
+            return None
+
+        self.last_shot_time = time.time()
         origin = Position(self.position.x + direction.value[0] * (self.RADIUS + Bullet.RADIUS + 1),
                           self.position.y + direction.value[1] * (self.RADIUS + Bullet.RADIUS + 1))
-        return Bullet(origin, direction, self.damage)
+        return Bullet(origin, direction, self.damage, config.DEFAULT_BULLET_SPEED)
 
     def hit(self, bullet: Bullet) -> None:
         """Registers a hit on this player by the given <bullet>.
         """
         self.health -= bullet.damage
+        if self.health <= 0:
+            # TODO: dead
+            self.health = 0
+
+        health_percent = self.health / self.max_health
+        self.color.r = int(self.HURT_COLOR.r + health_percent * (self.BASE_COLOR.r - self.HURT_COLOR.r))
+        self.color.g = int(self.HURT_COLOR.g + health_percent * (self.BASE_COLOR.g - self.HURT_COLOR.g))
+        self.color.b = int(self.HURT_COLOR.b + health_percent * (self.BASE_COLOR.b - self.HURT_COLOR.b))
+        self.color.a = int(self.HURT_COLOR.a + health_percent * (self.BASE_COLOR.a - self.HURT_COLOR.a))
+
 
     def draw(self, surface: pygame.Surface) -> None:
         """Draws the player to the given <surface>.
         """
         pos = round(self.position)
-        pygame.draw.circle(surface, self.COLOR, (pos.x, pos.y), self.RADIUS)
+        pygame.draw.circle(surface, self.color, (pos.x, pos.y), self.RADIUS)
