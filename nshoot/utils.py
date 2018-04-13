@@ -1,11 +1,20 @@
-"""Manages players in the game.
+"""Utility classes.
 
-This module manages all aspects of players in the game from movement to drawing.
+This module consists of utility classes to aid the main game classes.
 """
 
-from typing import Optional, Tuple
+from typing import Optional
 
-import pygame
+from enum import Enum
+
+
+class Direction(Enum):
+    """A direction in the game.
+    """
+    NORTH = (0, -1)
+    SOUTH = (0, 1)
+    EAST = (1, 0)
+    WEST = (-1, 0)
 
 
 class Position:
@@ -120,64 +129,3 @@ class Bounds:
         """
         return "<nshoot.player.Bounds (x:{}-{}, y:{}-{})>".format(str(self.x_min), str(self.x_max),
                                                                   str(self.y_min), str(self.y_max))
-
-
-class Player:
-    """A player in the game.
-    """
-    color: pygame.Color = pygame.Color("cornsilk")
-
-    damage: int
-    health: int
-    speed: int
-    radius: int
-
-    position: Position
-    bounds: Bounds
-
-    def __init__(self, damage: int, speed: int, radius: int) -> None:
-        """Initializes a new player with the given <damage>, <speed>, and <radius>.
-        """
-        self.damage = damage
-        self.speed = speed
-        self.radius = radius
-        self.position = Position(0, 0)
-        self.bounds = Bounds()
-
-    def _update_position(self, x: Optional[float] = None, y: Optional[float] = None) -> None:
-        """Updates the position of this player while satisfying bounds.
-        """
-        if x is None:
-            x = self.position.x
-        if y is None:
-            y = self.position.y
-
-        self.position.x = x
-        self.position.y = y
-        self.bounds.bound_position(self.position, self.radius)
-
-    def set_position(self, position: Position) -> None:
-        """Sets the position of this player.
-        """
-        self._update_position(position.x, position.y)
-
-    def set_bounds(self, bounds: Bounds) -> None:
-        """Sets the bounds of this player.
-        """
-        self.bounds = bounds
-        self._update_position()
-
-    def move(self, raw_input: Tuple[float, float], delta_time: float) -> None:
-        """Move the player in the direction specified by the <raw_input> and with the given <delta_time> modifier.
-
-        The <raw_input> is a tuple of (x, y) input floats. The <delta_time> is the time in seconds
-        since the last frame update.
-        """
-        self._update_position(self.position.x + self.speed * delta_time * raw_input[0],
-                              self.position.y + self.speed * delta_time * raw_input[1])
-
-    def draw(self, surface: pygame.Surface) -> None:
-        """Draws the player to the given <surface>.
-        """
-        pos = round(self.position)
-        pygame.draw.circle(surface, self.color, (pos.x, pos.y), self.radius)
