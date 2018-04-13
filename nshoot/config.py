@@ -5,7 +5,7 @@ from typing import Tuple, List
 
 from pygame import *
 
-from nshoot.strategy import Strategy, IdleStrategy, UserInputStrategy, MoveUpStrategy
+from nshoot.strategy import Strategy, IdleStrategy, UserInputStrategy
 
 
 WIDTH: int = 800
@@ -18,7 +18,7 @@ SHOOT_SOURCES: List[Tuple[int, int, int, int]] = [(K_LEFT, K_RIGHT, K_UP, K_DOWN
 
 DEFAULT_NUM_PLAYERS: int = 2
 DEFAULT_STRATEGIES: List[Strategy] = [UserInputStrategy(MOVE_SOURCES[0], SHOOT_SOURCES[0]),
-                                      MoveUpStrategy()]
+                                      IdleStrategy()]
 
 DEFAULT_STATS: Tuple[int, int, int, int] = (10, 400, 100, 10)
 DEFAULT_BULLET_SPEED: int = 800
