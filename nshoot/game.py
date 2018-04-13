@@ -6,6 +6,7 @@ from typing import List, Tuple, Optional
 
 import sys
 import math
+import random
 
 import pygame
 from nshoot import config
@@ -33,9 +34,8 @@ class Game:
         for i in range(self.num_players):
             player = Player(*stats[i])
 
-            screen_size = pygame.display.get_surface().get_size()
-            bounds = Bounds(x_max=screen_size[1], x_min=0, y_max=screen_size[0], y_min=0)
-            position = Position(screen_size[1] // 2, screen_size[0] // 2)
+            bounds = Bounds(x_max=config.WIDTH, x_min=0, y_max=config.HEIGHT, y_min=0)
+            position = Position(random.randint(0, config.WIDTH), random.randint(0, config.HEIGHT))
 
             player.set_bounds(bounds)
             player.set_position(position)
@@ -53,7 +53,8 @@ class Game:
                 continue
 
             for player in self.players:
-                dist = math.hypot(player.position.x - bullet.position.x, player.position.y - bullet.position.y)
+                dist = math.hypot(player.position.x - bullet.position.x,
+                                  player.position.y - bullet.position.y)
                 if dist <= player.RADIUS + bullet.RADIUS:
                     player.hit(bullet)
                     dead_bullets.append(bullet)
@@ -75,6 +76,16 @@ class Game:
 
         for i, player in enumerate(self.players):
             player.move(move_inputs[i], delta_time)
+
+            for other_player in self.players:
+                if other_player == player:
+                    continue
+                dist = math.hypot(player.position.x - other_player.position.x,
+                                  player.position.y - other_player.position.y)
+                if dist <= player.RADIUS + other_player.RADIUS:
+                    player.move((-move_inputs[i][0], -move_inputs[i][1]), delta_time)
+                    break
+
             if shoot_inputs[i] is not None:
                 bullet = player.shoot(shoot_inputs[i])
                 if bullet is not None:
