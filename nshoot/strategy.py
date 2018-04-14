@@ -17,11 +17,10 @@ class Strategy:
     info: GameInformation
 
     def __init__(self, player_id: str) -> None:
-        """Initializes this strategy with no game information and the given <player_id>.
-        `update_info` must be called before this strategy will work.
+        """Initializes this strategy with empty game information and the given <player_id>.
         """
         self.player_id = player_id
-        self.info = None
+        self.info = GameInformation()
 
     def get_move(self) -> Tuple[Tuple[float, float], Direction]:
         """Get the next move the player should make.
@@ -104,9 +103,9 @@ class BounceStrategy(Strategy):
         self.going_down = True
 
     def get_move(self) -> Tuple[Tuple[float, float], Optional[Direction]]:
-        """Get the next move the player should make. Gets user input in the user input strategy.
+        """Get the next move the player should make.
         """
-        position = self.info.player_information[self.player_id].position
+        position = self.info.players[self.player_id].position
         if self.going_down:
             if position.y >= 785:
                 self.going_down = False
@@ -119,6 +118,44 @@ class BounceStrategy(Strategy):
                 return self.get_move()
             else:
                 return (0, -1.0), Direction.EAST
+
+
+class SemiSmartStrategy(Strategy):
+    """Semi-smart strategy where the player lines up vertically and shoots to the correct direction of another player.
+    """
+    target_id: str
+
+    def __init__(self, player_id: str) -> None:
+        """Initializes this bounce strategy going down with the given <player_id>.
+        """
+        super().__init__(player_id)
+
+    def get_move(self) -> Tuple[Tuple[float, float], Optional[Direction]]:
+        """Get the next move the player should make.
+        """
+        target_id = self.player_id
+        for key in self.info.players.keys():
+            if key != target_id:
+                target_id = key
+                break
+
+        player_pos = self.info.players[self.player_id].position
+        target_pos = self.info.players[target_id].position
+
+        shoot = None
+        if target_pos.x < player_pos.x:
+            shoot = Direction.WEST
+        elif target_pos.x > player_pos.x:
+            shoot = Direction.EAST
+
+        move = (0.0, 0.0)
+        if target_pos.y > player_pos.y:
+            move = (0.0, 1.0)
+        elif target_pos.y < player_pos.y:
+            move = (0.0, -1.0)
+
+        return move, shoot
+
 
 
 

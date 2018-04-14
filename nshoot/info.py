@@ -36,9 +36,9 @@ class GameInformation:
     players: Dict[str, PlayerInformation]
     bullet_information: List[BulletInformation]
 
-    def __init__(self, player_information: Dict[str, PlayerInformation],
-                 bullet_information: List[BulletInformation]) -> None:
+    def __init__(self, players: Dict[str, PlayerInformation] = None,
+                 bullet_information: List[BulletInformation] = None) -> None:
         """Initialize the information in the game.
         """
-        self.player_information = player_information
-        self.bullet_information = bullet_information
+        self.players = players if players else {}
+        self.bullet_information = bullet_information if bullet_information else []

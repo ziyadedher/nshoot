@@ -10,7 +10,7 @@ import time
 import pygame
 from nshoot import config
 from nshoot.strategy import Strategy
-from nshoot.info import PlayerInformation
+from nshoot.info import PlayerInformation, BulletInformation
 from nshoot.utils import Position, Direction, Bounds
 
 
@@ -41,6 +41,12 @@ class Bullet(Element):
         self.direction = direction
         self.damage = damage
         self.speed = speed
+
+    def get_info(self) -> BulletInformation:
+        """Gets important information about this bullet.
+        """
+        return BulletInformation(self.position)
+
 
     def move(self, delta_time: float) -> None:
         """Moves this bullet in its direction with the given <delta_time> modifier.

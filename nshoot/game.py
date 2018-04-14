@@ -34,7 +34,7 @@ class Game:
         self.bullets = []
 
         stats = stats + [config.DEFAULT_STATS] * (num_players - len(stats))\
-            if stats else [config.DEFAULT_STATS] * num_players
+            if stats else config.DEFAULT_PLAYER_STATS
         for i in range(num_players):
             player = Player(player_ids[i], *stats[i], strategy=strategies[i])
 
@@ -55,7 +55,7 @@ class Game:
 
         bullet_information = []
         for bullet in self.bullets:
-            pass
+            bullet_information.append(bullet.get_info())
 
         return GameInformation(player_information, bullet_information)
 
@@ -166,15 +166,15 @@ class GameView:
         """Updates the game view considering the given given <delta_time>
         which is the time elapsed since the last frame in seconds.
         """
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-
         self.game.update(delta_time)
 
     def refresh(self) -> None:
         """Refreshes the display to redraw everything.
         """
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
         self.surface.fill(self.COLOR)
         self.game.draw(self.surface)
         pygame.display.flip()
