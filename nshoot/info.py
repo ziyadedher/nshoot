@@ -11,34 +11,40 @@ from nshoot.utils import Vector
 class PlayerInformation:
     """Contains information about a player.
     """
+    radius: int
     position: Vector
 
-    def __init__(self, position: Vector) -> None:
+    def __init__(self, radius: int, position: Vector) -> None:
         """Initialize this player information.
         """
+        self.radius = radius
         self.position = position.duplicate()
 
 
 class BulletInformation:
     """Contains information about a bullet.
     """
+    radius: int
     position: Vector
+    direction: Vector
 
-    def __init__(self, position: Vector) -> None:
+    def __init__(self, radius: int, position: Vector, direction: Vector) -> None:
         """Initialize this bullet information.
         """
+        self.radius = radius
         self.position = position.duplicate()
+        self.direction = direction.duplicate()
 
 
 class GameInformation:
     """Contains information about the current game state.
     """
     players: Dict[str, PlayerInformation]
-    bullet_information: List[BulletInformation]
+    bullets: List[BulletInformation]
 
     def __init__(self, players: Dict[str, PlayerInformation] = None,
-                 bullet_information: List[BulletInformation] = None) -> None:
+                 bullets: List[BulletInformation] = None) -> None:
         """Initialize the information in the game.
         """
         self.players = players if players else {}
-        self.bullet_information = bullet_information if bullet_information else []
+        self.bullets = bullets if bullets else []

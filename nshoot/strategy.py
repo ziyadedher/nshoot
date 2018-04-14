@@ -6,7 +6,7 @@ This module manages and executes the different strategies available for a player
 from typing import Tuple, Optional
 
 import pygame
-from nshoot.info import GameInformation
+from nshoot.info import GameInformation, PlayerInformation, BulletInformation
 from nshoot.utils import Vector
 
 
@@ -32,6 +32,13 @@ class Strategy:
         """
         self.info = info
 
+    def _select_random_target(self) -> str:
+        """Selects a random target player.
+        """
+        for key in self.info.players.keys():
+            if key != self.player_id:
+                return key
+
 
 class IdleStrategy(Strategy):
     """Idle strategy that causes any player using it to never make any move.
@@ -39,7 +46,7 @@ class IdleStrategy(Strategy):
     def get_move(self) -> Tuple[Vector, Vector]:
         """Get the next move the player should make. It does nothing in the idle strategy.
         """
-        return Vector(0, 0), Vector(0, 0)
+        return Vector.zero(), Vector.zero()
 
 
 class UserInputStrategy(Strategy):
@@ -125,21 +132,16 @@ class SemiSmartStrategy(Strategy):
     target_id: str
 
     def __init__(self, player_id: str) -> None:
-        """Initializes this bounce strategy going down with the given <player_id>.
+        """Initializes this semi-smart strategy with itself as target and with the given <player_id>.
         """
         super().__init__(player_id)
+        self.target_id = self.player_id
 
     def get_move(self) -> Tuple[Vector, Vector]:
         """Get the next move the player should make.
         """
-        target_id = self.player_id
-        for key in self.info.players.keys():
-            if key != target_id:
-                target_id = key
-                break
-
         player_pos = self.info.players[self.player_id].position
-        target_pos = self.info.players[target_id].position
+        target_pos = self.info.players[self._select_random_target()].position
 
         shoot = (0, 0)
         if target_pos.x < player_pos.x:
@@ -156,7 +158,51 @@ class SemiSmartStrategy(Strategy):
         return Vector(*move), Vector(*shoot)
 
 
+class SmartStrategy(Strategy):
+    """Smart strategy where the player dodges bullets vertically, lines up horizontally and vertically, and shoots
+    to the correct direction of another player.
+    """
+    target_id: str
 
+    def __init__(self, player_id: str) -> None:
+        """Initializes this bounce strategy going down with the given <player_id>.
+        """
+        super().__init__(player_id)
+        self.target_id = self.player_id
 
+    def get_move(self) -> Tuple[Vector, Vector]:
+        """Get the next move the player should make.
+        """
+        player = self.info.players[self.player_id]
+        target = self.info.players[self._select_random_target()]
+        bullet = self._get_closest_dangerous_bullet()
 
+        move = Vector.zero()
+        if bullet:
+            bullet_dist = player.position.distance(bullet.position)
+            projection = bullet.direction * bullet_dist + bullet.position
+            margin = player.radius + bullet.radius + 100
 
+            if player.position.x - margin <= projection.x <= player.position.x + margin:
+                move.x += 1 * abs(bullet.direction.y) * (1 if projection.y < player.position.y else -1)
+            if player.position.y - margin <= projection.y <= player.position.y + margin:
+                move.y += 1 * abs(bullet.direction.x) * (1 if projection.y < player.position.y else -1)
+
+        return move, Vector.zero()
+
+    def _get_closest_dangerous_bullet(self) -> Optional[BulletInformation]:
+        """Returns the bullet information of the closest bullet to the player's position travelling towards the player.
+        """
+        if len(self.info.bullets) == 0:
+            return None
+
+        player = self.info.players[self.player_id]
+
+        dangerous_bullets = []
+        for bullet in self.info.bullets:
+            if player.position.distance(bullet.position) > \
+                    player.position.distance(bullet.position + bullet.direction):
+                    dangerous_bullets.append(bullet)
+
+        return min(dangerous_bullets, key=lambda bullet: player.position.distance(bullet.position)) \
+            if dangerous_bullets else None

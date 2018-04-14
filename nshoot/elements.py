@@ -3,7 +3,7 @@
 This module manages all aspects of players in the game from movement to drawing.
 """
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import time
 
@@ -45,7 +45,7 @@ class Bullet(Element):
     def get_info(self) -> BulletInformation:
         """Gets important information about this bullet.
         """
-        return BulletInformation(self.position)
+        return BulletInformation(self.RADIUS, self.position, self.direction)
 
     def move(self, delta_time: float) -> None:
         """Moves this bullet in its direction with the given <delta_time> modifier.
@@ -115,7 +115,7 @@ class Player(Element):
     def get_info(self) -> PlayerInformation:
         """Gets important information about this player.
         """
-        return PlayerInformation(self.position)
+        return PlayerInformation(self.RADIUS, self.position)
 
     def _bound(self) -> None:
         """Bounds the player's position to satisfy bounds.

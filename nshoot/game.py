@@ -131,7 +131,6 @@ class GameView:
     surface: pygame.Surface
     clock: pygame.time.Clock
     game: Game
-    joysticks: List[pygame.joystick.Joystick]
 
     def __init__(self, size: Tuple[int, int], caption: str) -> None:
         """Initializes this game view with the given `x` by `y` <size> and the given <caption>.
