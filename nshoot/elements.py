@@ -42,6 +42,31 @@ class Bullet(Element):
         self.damage = damage
         self.speed = speed
 
+    def __eq__(self, other: object) -> bool:
+        """Returns whether or not two bullet objects are equal.
+        """
+        if type(self) != type(other):
+            return False
+        other: Bullet
+        return (self.RADIUS == other.RADIUS and self.damage == other.damage
+                and self.position == other.position and self.direction == other.direction and self.speed == other.speed)
+
+    def __str__(self) -> str:
+        """Return a human-readable representation of this bounds object.
+
+        In the form ```Bullet <position>: direction - <direction>, damage - <damage>, speed - <speed>```.
+        """
+        return "Bullet {}: direction - {}, damage - {}, speed - {}".format(str(self.position)[6:],
+                                                                           str(self.direction)[6:],
+                                                                           str(self.damage), str(self.speed))
+
+    def __repr__(self):
+        """Return a mechanical representation of this bounds object.
+
+        In the form ```<nshoot.elements.Bullet (<memory address>)>```.
+        """
+        return "nshoot.elements.Bullet ({})".format(id(self))
+
     def get_info(self) -> BulletInformation:
         """Gets important information about this bullet.
         """
@@ -110,12 +135,14 @@ class Player(Element):
 
     @property
     def player_id(self) -> str:
+        """Returns player id.
+        """
         return self._player_id
 
     def get_info(self) -> PlayerInformation:
         """Gets important information about this player.
         """
-        return PlayerInformation(self.RADIUS, self.position)
+        return PlayerInformation(self.RADIUS, self.position, self.bounds)
 
     def _bound(self) -> None:
         """Bounds the player's position to satisfy bounds.
@@ -140,7 +167,7 @@ class Player(Element):
         The <raw_input> is a tuple of (x, y) input floats. The <delta_time> is the time in seconds
         since the last frame update.
         """
-        self.position += Vector(1, 1) * direction * self.speed * delta_time
+        self.position += Vector(1, 1) * direction.normalize() * self.speed * delta_time
         self._bound()
 
     def shoot(self, direction: Vector) -> Optional[Bullet]:

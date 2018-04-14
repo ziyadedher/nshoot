@@ -23,6 +23,8 @@ class Vector:
 
     @staticmethod
     def zero() -> 'Vector':
+        """Returns the zero vector.
+        """
         return Vector(0, 0)
 
     @property
@@ -138,6 +140,13 @@ class Vector:
         """
         return "Vector({}, {})".format(str(self.x), str(self.y))
 
+    def __repr__(self) -> str:
+        """Return a mechanical representation of this vector object.
+
+        In the form ```<nshoot.utils.Vector (x=<x>, y=<y>)>```.
+        """
+        return "<nshoot.utils.Vector (x={}, y={})>".format(str(self.x), str(self.y))
+
 
 class Bounds:
     """Bounds for a player that has methods to restrict positioning.
@@ -154,12 +163,10 @@ class Bounds:
         """
         if x_min is not None and x_max is not None:
             if x_min > x_max:
-                # TODO: handle invalid bounds
-                pass
+                raise ValueError("Invalid bounds input!")
         if y_min is not None and y_max is not None:
             if y_min > y_max:
-                # TODO: handle invalid bounds
-                pass
+                raise ValueError("Invalid bounds input!")
 
         self.x_max = x_max
         self.x_min = x_min
@@ -187,6 +194,11 @@ class Bounds:
             if position.y > y_max_padding:
                 position.y = y_max_padding
 
+    def duplicate(self) -> 'Bounds':
+        """Returns a duplicate of this Bounds.
+        """
+        return Bounds(x_max=self.x_max, x_min=self.x_min, y_max=self.y_max, y_min=self.y_min)
+
     def __eq__(self, other: object) -> bool:
         """Returns whether or not two bounds objects are equal.
         """
@@ -203,3 +215,12 @@ class Bounds:
         """
         return "Bounds ({} - {}, {} - {})".format(str(self.x_min), str(self.x_max),
                                                   str(self.y_min), str(self.y_max))
+
+    def __repr__(self) -> str:
+        """Return a mechanical representation of this bounds object.
+
+        In the form ```<nshoot.utils.Bounds (x=<x_min>-<x_max>, y=<y_min>-<y_max>)>```.
+        In the form ```<nshoot.utils.Bounds (x:<x_min>-<x_max>, y:<y_min>-<y_max>)>```.
+        """
+        return "<nshoot.utils.Bounds (x:{}-{}, y:{}-{})>".format(str(self.x_min), str(self.x_max),
+                                                                 str(self.y_min), str(self.y_max))
