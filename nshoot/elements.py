@@ -3,13 +3,14 @@
 This module manages all aspects of players in the game from movement to drawing.
 """
 
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple, Dict
 
 import time
 
 import pygame
 from nshoot import config
 from nshoot.strategy import Strategy
+from nshoot.info import PlayerInformation
 from nshoot.utils import Position, Direction, Bounds
 
 
@@ -82,10 +83,13 @@ class Player(Element):
 
     color: pygame.Color
 
-    def __init__(self, damage: int, speed: int, max_health: int, firerate: int, strategy: Strategy) -> None:
-        """Initializes a new player with the given <damage>, <speed>, <max_health> and <firerate>. Can also take a
-        <strategy> that determines how the player will play.
+    def __init__(self, player_id: str,
+                 damage: int, speed: int, max_health: int, firerate: int, strategy: Strategy) -> None:
+        """Initializes a new player <player_id> with the given <damage>, <speed>, <max_health> and <firerate>.
+        Can also take a <strategy> that determines how the player will play.
         """
+        self._player_id = player_id
+
         self.damage = damage
         self.max_health = max_health
         self.health = self.max_health
@@ -100,10 +104,14 @@ class Player(Element):
 
         self.color = pygame.Color(self.BASE_COLOR.r, self.BASE_COLOR.g, self.BASE_COLOR.b, self.BASE_COLOR.a)
 
-    def get_info(self) -> tuple:
-        """Gets all information about this player.
+    @property
+    def player_id(self) -> str:
+        return self._player_id
+
+    def get_info(self) -> PlayerInformation:
+        """Gets important information about this player.
         """
-        return self.position,
+        return PlayerInformation(self.position)
 
     def _update_position(self, x: Optional[float] = None, y: Optional[float] = None) -> None:
         """Updates the position of this player while satisfying bounds.

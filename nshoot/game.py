@@ -11,6 +11,7 @@ import random
 
 import pygame
 from nshoot import config
+from nshoot.info import GameInformation
 from nshoot.strategy import Strategy
 from nshoot.elements import Player, Bullet
 from nshoot.utils import Position, Bounds
@@ -19,24 +20,23 @@ from nshoot.utils import Position, Bounds
 class Game:
     """A game instance that controls all underlying aspects of the game including simulation.
     """
-    num_players: int
     players: List[Player]
     bullets: List[Bullet]
 
     def __init__(self, num_players: int = config.DEFAULT_NUM_PLAYERS,
+                 player_ids: List[str] = config.DEFAULT_PLAYER_IDS,
                  stats: Optional[List[Tuple[int, int, int, int]]] = None,
                  strategies: List[Strategy] = config.DEFAULT_STRATEGIES):
         """Initializes this game instance with the given number of players <num_players>
         and the statistics of each player <stats> with the strategy of each player <strategy>.
         """
-        self.num_players = num_players
         self.players = []
         self.bullets = []
 
         stats = stats + [config.DEFAULT_STATS] * (num_players - len(stats))\
             if stats else [config.DEFAULT_STATS] * num_players
-        for i in range(self.num_players):
-            player = Player(*stats[i], strategy=strategies[i])
+        for i in range(num_players):
+            player = Player(player_ids[i], *stats[i], strategy=strategies[i])
 
             bounds = Bounds(x_max=config.WIDTH, x_min=0, y_max=config.HEIGHT, y_min=0)
             position = Position(random.randint(0, config.WIDTH), random.randint(0, config.HEIGHT))
@@ -45,6 +45,19 @@ class Game:
             player.set_position(position)
 
             self.players.append(player)
+
+    def _get_game_information(self) -> GameInformation:
+        """Gets the information about this game.
+        """
+        player_information = {}
+        for player in self.players:
+            player_information[player.player_id] = player.get_info()
+
+        bullet_information = []
+        for bullet in self.bullets:
+            pass
+
+        return GameInformation(player_information, bullet_information)
 
     def _register_hits(self) -> None:
         """Registers hits from all bullets.
@@ -77,8 +90,10 @@ class Game:
     def update(self, delta_time: float) -> None:
         """Update the game internal state taking into consideration the given <delta_time>.
         """
+        game_info = self._get_game_information()
+
         for player in self.players:
-            player.strategy.update_info(player.get_info())
+            player.strategy.update_info(game_info)
             move_vector, shoot_vector = player.strategy.get_move()
             player.move(move_vector, delta_time)
 

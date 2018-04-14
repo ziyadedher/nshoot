@@ -29,6 +29,11 @@ class Position:
         self.x = x
         self.y = y
 
+    def duplicate(self) -> 'Position':
+        """Returns a duplicate of this position.
+        """
+        return Position(self.x, self.y)
+
     def __round__(self, n=None) -> 'Position':
         """Returns a new position rounded to the nearest whole coordinates.
         """
