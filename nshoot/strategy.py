@@ -176,6 +176,7 @@ class SmartStrategy(Strategy):
         player = self.info.players[self.player_id]
         target = self.info.players[self._select_random_target()]
         bullet = self._get_closest_dangerous_bullet()
+        bounds = self.info.players[self.player_id].bounds
 
         move = Vector.zero()
         if bullet:
@@ -184,9 +185,24 @@ class SmartStrategy(Strategy):
             margin = player.radius + bullet.radius + 100
 
             if player.position.x - margin <= projection.x <= player.position.x + margin:
-                move.x += 1 * abs(bullet.direction.y) * (1 if projection.y < player.position.y else -1)
+                move.x = 1 * abs(bullet.direction.y) * (1 if projection.x < player.position.x else -1)
             if player.position.y - margin <= projection.y <= player.position.y + margin:
-                move.y += 1 * abs(bullet.direction.x) * (1 if projection.y < player.position.y else -1)
+                move.y = 1 * abs(bullet.direction.x) * (1 if projection.y < player.position.y else -1)
+
+        radius = 100
+        if player.position.distance(target.position) <= radius:
+            opposite = player.position - target.position
+            move = opposite.normalize()
+
+        padding = 5
+        if (player.position.x + player.radius + padding) >= bounds.x_max:
+            move.x = -1
+        elif (player.position.x - player.radius - padding) <= bounds.x_min:
+            move.x = 1
+        if (player.position.y + player.radius + padding) >= bounds.y_max:
+            move.y = -1
+        elif (player.position.y - player.radius - padding) <= bounds.y_min:
+            move.y = 1
 
         return move, Vector.zero()
 

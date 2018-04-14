@@ -5,7 +5,7 @@ This module contains data holders that manage information about the game and pla
 
 from typing import List, Dict
 
-from nshoot.utils import Vector
+from nshoot.utils import Vector, Bounds
 
 
 class PlayerInformation:
@@ -13,12 +13,14 @@ class PlayerInformation:
     """
     radius: int
     position: Vector
+    bounds: Bounds
 
-    def __init__(self, radius: int, position: Vector) -> None:
+    def __init__(self, radius: int, position: Vector, bounds: Bounds) -> None:
         """Initialize this player information.
         """
         self.radius = radius
         self.position = position.duplicate()
+        self.bounds = bounds.duplicate()
 
 
 class BulletInformation:
