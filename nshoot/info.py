@@ -5,15 +5,15 @@ This module contains data holders that manage information about the game and pla
 
 from typing import List, Dict
 
-from nshoot.utils import Position
+from nshoot.utils import Vector
 
 
 class PlayerInformation:
     """Contains information about a player.
     """
-    position: Position
+    position: Vector
 
-    def __init__(self, position: Position) -> None:
+    def __init__(self, position: Vector) -> None:
         """Initialize this player information.
         """
         self.position = position.duplicate()
@@ -22,9 +22,9 @@ class PlayerInformation:
 class BulletInformation:
     """Contains information about a bullet.
     """
-    position: Position
+    position: Vector
 
-    def __init__(self, position: Position) -> None:
+    def __init__(self, position: Vector) -> None:
         """Initialize this bullet information.
         """
         self.position = position.duplicate()

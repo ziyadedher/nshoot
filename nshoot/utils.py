@@ -3,63 +3,140 @@
 This module consists of utility classes to aid the main game classes.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
-from enum import Enum
+import math
 
 
-class Direction(Enum):
-    """A direction in the game.
+class Vector:
+    """Represents a vector in the game with x- and y- values.
     """
-    NORTH = (0, -1)
-    SOUTH = (0, 1)
-    EAST = (1, 0)
-    WEST = (-1, 0)
 
-
-class Position:
-    """Represents a position in the game with x- and y- coordinates.
-    """
     x: float
     y: float
 
     def __init__(self, x: float, y: float) -> None:
-        """Initialize a position with the given <x> and <y> values.
+        """Initialize a vector with the given <x> and <y> values.
         """
         self.x = x
         self.y = y
 
-    def duplicate(self) -> 'Position':
+    @staticmethod
+    def zero() -> 'Vector':
+        return Vector(0, 0)
+
+    @property
+    def magnitude(self) -> float:
+        """Returns the magnitude of the vector.
+        """
+        return math.sqrt(self.x ** 2 + self.y ** 2)
+
+    @property
+    def angle(self) -> float:
+        """Returns the angle of this vector in radians from the positive horizontal counter-clockwise.
+        """
+        return math.tan(self.y / self.x)
+
+    def distance(self, vector: 'Vector') -> float:
+        """Returns the distance between this vector and the given <vector> in space.
+        """
+        return math.hypot(self.x - vector.x, self.y - vector.y)
+
+    def duplicate(self) -> 'Vector':
         """Returns a duplicate of this position.
         """
-        return Position(self.x, self.y)
+        return Vector(self.x, self.y)
 
-    def __round__(self, n=None) -> 'Position':
+    def normalize(self) -> 'Vector':
+        """Returns a new vector in the same direction but with magnitude 1, or the zero vector.
+        """
+        return self / self.magnitude if self.magnitude != 0 else Vector(0, 0)
+
+    def __round__(self, n=None) -> 'Vector':
         """Returns a new position rounded to the nearest whole coordinates.
         """
-        return Position(round(self.x), round(self.y))
+        return Vector(round(self.x), round(self.y))
 
-    def __eq__(self, other: object) -> bool:
+    def __neg__(self) -> 'Vector':
+        """Returns a new vector of the same magnitude but opposite direction.
+        """
+        return Vector(-self.x, -self.y)
+
+    def __add__(self, other: Any) -> 'Vector':
+        """Returns a new vector which is the result of adding each component of the vectors if it is a vector or
+        adding the number to all components of the vector otherwise.
+        """
+        return Vector(self.x + other.x, self.y + other.y) \
+            if isinstance(other, Vector) else Vector(self.x + other, self.y + other)
+
+    def __iadd__(self, other: Any) -> 'Vector':
+        """Modifies this vector to the result of adding each component of the vectors if it is a vector or
+        adding the number to all components of the vector otherwise.
+        """
+        if isinstance(other, Vector):
+            self.x += other.x
+            self.y += other.y
+        else:
+            self.x += other
+            self.y += other
+        return self
+
+    def __sub__(self, other: Any) -> 'Vector':
+        """Returns a new vector which is the result of subtracting each component of the vectors if it is a vector or
+        subtracting the number to all components of the vector otherwise.
+        """
+        return Vector(self.x - other.x, self.y - other.y) \
+            if isinstance(other, Vector) else Vector(self.x - other, self.y - other)
+
+    def __isub__(self, other: Any) -> 'Vector':
+        """Modifies this vector to the result of subtracting each component of the vectors if it is a vector or
+        subtracting the number to all components of the vector otherwise.
+        """
+        if isinstance(other, Vector):
+            self.x -= other.x
+            self.y -= other.y
+        else:
+            self.x -= other
+            self.y -= other
+        return self
+
+    def __mul__(self, other: Any) -> 'Vector':
+        """Returns a new vector which is the result of multiplying each component of the vectors if it is a vector or
+        multiplying the number to all components of the vector otherwise.
+        """
+        return Vector(self.x * other.x, self.y * other.y) \
+            if isinstance(other, Vector) else Vector(self.x * other, self.y * other)
+
+    def __imul__(self, other: Any) -> 'Vector':
+        """Modifies this vector to the result of multiplying each component of the vectors if it is a vector or
+        multiplying the number to all components of the vector otherwise.
+        """
+        if isinstance(other, Vector):
+            self.x *= other.x
+            self.y *= other.y
+        else:
+            self.x *= other
+            self.y *= other
+        return self
+
+    def __truediv__(self, other: Any) -> 'Vector':
+        """Returns a new vector which is the result of dividing each of the coordinates by the given.
+        """
+        return Vector(self.x / other, self.y / other)
+
+    def __eq__(self, other: Any) -> bool:
         """Returns whether or not two position objects are equal.
         """
-        if not type(self) == type(other):
+        if not isinstance(other, Vector):
             return False
-        other: Position
         return other.x == self.x and other.y == self.y
 
     def __str__(self) -> str:
         """Return a human-readable representation of this position object.
 
-        In the form ```Position (<x>, <y>)```.
+        In the form ```Vector (<x>, <y>)```.
         """
-        return "Position({}, {})".format(str(self.x), str(self.y))
-
-    def __repr__(self) -> str:
-        """Return a mechanical representation of this position object.
-
-        In the form ```<nshoot.player.Position (x=<x>, y=<y>)>```.
-        """
-        return "<nshoot.player.Position (x={}, y={})>".format(str(self.x), str(self.y))
+        return "Vector({}, {})".format(str(self.x), str(self.y))
 
 
 class Bounds:
@@ -89,7 +166,7 @@ class Bounds:
         self.y_max = y_max
         self.y_min = y_min
 
-    def bound_position(self, position: Position, padding: int) -> None:
+    def bound_position(self, position: Vector, padding: int) -> None:
         """Bound the given <position> using this bounding object in place, with the given <padding> on any side
         of the position.
         """
@@ -126,11 +203,3 @@ class Bounds:
         """
         return "Bounds ({} - {}, {} - {})".format(str(self.x_min), str(self.x_max),
                                                   str(self.y_min), str(self.y_max))
-
-    def __repr__(self) -> str:
-        """Return a mechanical representation of this bounds object.
-
-        In the form ```<nshoot.player.Bounds (x:<x_min>-<x_max>, y:<y_min>-<y_max>)>```.
-        """
-        return "<nshoot.player.Bounds (x:{}-{}, y:{}-{})>".format(str(self.x_min), str(self.x_max),
-                                                                  str(self.y_min), str(self.y_max))

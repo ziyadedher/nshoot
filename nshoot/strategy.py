@@ -7,7 +7,7 @@ from typing import Tuple, Optional
 
 import pygame
 from nshoot.info import GameInformation
-from nshoot.utils import Direction
+from nshoot.utils import Vector
 
 
 class Strategy:
@@ -22,7 +22,7 @@ class Strategy:
         self.player_id = player_id
         self.info = GameInformation()
 
-    def get_move(self) -> Tuple[Tuple[float, float], Direction]:
+    def get_move(self) -> Tuple[Vector, Vector]:
         """Get the next move the player should make.
         """
         raise NotImplementedError
@@ -36,10 +36,10 @@ class Strategy:
 class IdleStrategy(Strategy):
     """Idle strategy that causes any player using it to never make any move.
     """
-    def get_move(self) -> Tuple[Tuple[float, float], Optional[Direction]]:
+    def get_move(self) -> Tuple[Vector, Vector]:
         """Get the next move the player should make. It does nothing in the idle strategy.
         """
-        return (0.0, 0.0), None
+        return Vector(0, 0), Vector(0, 0)
 
 
 class UserInputStrategy(Strategy):
@@ -57,38 +57,37 @@ class UserInputStrategy(Strategy):
         self.move_keys = move_keys
         self.shoot_keys = shoot_keys
 
-    def get_move(self) -> Tuple[Tuple[float, float], Optional[Direction]]:
+    def get_move(self) -> Tuple[Vector, Vector]:
         """Get the next move the player should make. Gets user input in the user input strategy.
         """
         return self.get_user_input()
 
-    def get_user_input(self) -> Tuple[Tuple[float, float], Optional[Direction]]:
+    def get_user_input(self) -> Tuple[Vector, Optional[Vector]]:
         """Gets the user raw input from all sources in a list.
         """
         pressed = pygame.key.get_pressed()
 
-        source_input = [0.0, 0.0]
+        move = [0.0, 0.0]
         if pressed[self.move_keys[0]]:
-            source_input[0] -= 1
+            move[0] -= 1
         if pressed[self.move_keys[1]]:
-            source_input[0] += 1
+            move[0] += 1
         if pressed[self.move_keys[2]]:
-            source_input[1] -= 1
+            move[1] -= 1
         if pressed[self.move_keys[3]]:
-            source_input[1] += 1
-        move = (source_input[0], source_input[1])
+            move[1] += 1
 
-        shoot = None
+        shoot = [0.0, 0.0]
         if pressed[self.shoot_keys[0]]:
-            shoot = Direction.WEST
-        elif pressed[self.shoot_keys[1]]:
-            shoot = Direction.EAST
-        elif pressed[self.shoot_keys[2]]:
-            shoot = Direction.NORTH
-        elif pressed[self.shoot_keys[3]]:
-            shoot = Direction.SOUTH
+            shoot[0] -= 1
+        if pressed[self.shoot_keys[1]]:
+            shoot[0] += 1
+        if pressed[self.shoot_keys[2]]:
+            shoot[1] -= 1
+        if pressed[self.shoot_keys[3]]:
+            shoot[1] += 1
 
-        return move, shoot
+        return Vector(*move), Vector(*shoot)
 
 
 class BounceStrategy(Strategy):
@@ -102,7 +101,7 @@ class BounceStrategy(Strategy):
         super().__init__(player_id)
         self.going_down = True
 
-    def get_move(self) -> Tuple[Tuple[float, float], Optional[Direction]]:
+    def get_move(self) -> Tuple[Vector, Vector]:
         """Get the next move the player should make.
         """
         position = self.info.players[self.player_id].position
@@ -111,13 +110,13 @@ class BounceStrategy(Strategy):
                 self.going_down = False
                 return self.get_move()
             else:
-                return (0, 1.0), Direction.EAST
+                return Vector(0, 1), Vector(1, 0)
         else:
             if position.y <= 15:
                 self.going_down = True
                 return self.get_move()
             else:
-                return (0, -1.0), Direction.EAST
+                return Vector(0, -1), Vector(-1, 0)
 
 
 class SemiSmartStrategy(Strategy):
@@ -130,7 +129,7 @@ class SemiSmartStrategy(Strategy):
         """
         super().__init__(player_id)
 
-    def get_move(self) -> Tuple[Tuple[float, float], Optional[Direction]]:
+    def get_move(self) -> Tuple[Vector, Vector]:
         """Get the next move the player should make.
         """
         target_id = self.player_id
@@ -142,19 +141,20 @@ class SemiSmartStrategy(Strategy):
         player_pos = self.info.players[self.player_id].position
         target_pos = self.info.players[target_id].position
 
-        shoot = None
+        shoot = (0, 0)
         if target_pos.x < player_pos.x:
-            shoot = Direction.WEST
+            shoot = (-1, 0)
         elif target_pos.x > player_pos.x:
-            shoot = Direction.EAST
+            shoot = (1, 0)
 
-        move = (0.0, 0.0)
+        move = (0, 0)
         if target_pos.y > player_pos.y:
-            move = (0.0, 1.0)
+            move = (0, 1)
         elif target_pos.y < player_pos.y:
-            move = (0.0, -1.0)
+            move = (0, -1)
 
-        return move, shoot
+        return Vector(*move), Vector(*shoot)
+
 
 
 

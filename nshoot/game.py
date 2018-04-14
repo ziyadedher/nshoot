@@ -6,7 +6,6 @@ This module manages interaction of the user with the game, including viewing and
 from typing import List, Tuple, Optional
 
 import sys
-import math
 import random
 
 import pygame
@@ -14,7 +13,7 @@ from nshoot import config
 from nshoot.info import GameInformation
 from nshoot.strategy import Strategy
 from nshoot.elements import Player, Bullet
-from nshoot.utils import Position, Bounds
+from nshoot.utils import Vector, Bounds
 
 
 class Game:
@@ -39,7 +38,7 @@ class Game:
             player = Player(player_ids[i], *stats[i], strategy=strategies[i])
 
             bounds = Bounds(x_max=config.WIDTH, x_min=0, y_max=config.HEIGHT, y_min=0)
-            position = Position(random.randint(0, config.WIDTH), random.randint(0, config.HEIGHT))
+            position = Vector(random.randint(0, config.WIDTH), random.randint(0, config.HEIGHT))
 
             player.set_bounds(bounds)
             player.set_position(position)
@@ -70,8 +69,7 @@ class Game:
                 continue
 
             for player in self.players:
-                dist = math.hypot(player.position.x - bullet.position.x,
-                                  player.position.y - bullet.position.y)
+                dist = player.position.distance(bullet.position)
                 if dist <= player.RADIUS + bullet.RADIUS:
                     player.hit(bullet)
                     dead_bullets.append(bullet)
@@ -101,16 +99,14 @@ class Game:
             for other_player in self.players:
                 if other_player == player:
                     continue
-                dist = math.hypot(player.position.x - other_player.position.x,
-                                  player.position.y - other_player.position.y)
+                dist = player.position.distance(other_player.position)
                 if dist <= player.RADIUS + other_player.RADIUS:
-                    player.move((-move_vector[0], -move_vector[1]), delta_time)
+                    player.move(-move_vector, delta_time)
                     break
 
-            if shoot_vector is not None:
-                bullet = player.shoot(shoot_vector)
-                if bullet is not None:
-                    self.bullets.append(bullet)
+            bullet = player.shoot(shoot_vector)
+            if bullet is not None:
+                self.bullets.append(bullet)
 
         for bullet in self.bullets:
             bullet.move(delta_time)

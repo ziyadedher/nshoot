@@ -3,7 +3,7 @@
 This module manages all aspects of players in the game from movement to drawing.
 """
 
-from typing import Any, Optional, Tuple, Dict
+from typing import Optional, Tuple
 
 import time
 
@@ -11,7 +11,7 @@ import pygame
 from nshoot import config
 from nshoot.strategy import Strategy
 from nshoot.info import PlayerInformation, BulletInformation
-from nshoot.utils import Position, Direction, Bounds
+from nshoot.utils import Vector, Bounds
 
 
 class Element:
@@ -29,16 +29,16 @@ class Bullet(Element):
     COLOR: pygame.Color = pygame.Color("lightcoral")
     RADIUS: int = 5
 
-    direction: Direction
-    position: Position
+    direction: Vector
+    position: Vector
     damage: int
     speed: int
 
-    def __init__(self, origin: Position, direction: Direction, damage: int, speed: int) -> None:
+    def __init__(self, origin: Vector, direction: Vector, damage: int, speed: int) -> None:
         """Initializes a bullet travelling from an <origin> in a given <direction> at a given <speed>.
         """
         self.position = origin
-        self.direction = direction
+        self.direction = direction.normalize()
         self.damage = damage
         self.speed = speed
 
@@ -47,12 +47,10 @@ class Bullet(Element):
         """
         return BulletInformation(self.position)
 
-
     def move(self, delta_time: float) -> None:
         """Moves this bullet in its direction with the given <delta_time> modifier.
         """
-        self.position.x += self.speed * delta_time * self.direction.value[0]
-        self.position.y += self.speed * delta_time * self.direction.value[1]
+        self.position += Vector(1, 1) * self.direction * self.speed * delta_time
 
     def out_of_bounds(self) -> bool:
         """Returns whether or not this bullet is out of bounds of the screen.
@@ -83,7 +81,7 @@ class Player(Element):
     firerate: int
 
     last_shot_time: float
-    position: Position
+    position: Vector
     bounds: Bounds
     strategy: Strategy
 
@@ -104,7 +102,7 @@ class Player(Element):
         self.firerate = firerate
 
         self.last_shot_time = time.time()
-        self.position = Position(0, 0)
+        self.position = Vector(0, 0)
         self.bounds = Bounds()
         self.strategy = strategy
 
@@ -119,47 +117,40 @@ class Player(Element):
         """
         return PlayerInformation(self.position)
 
-    def _update_position(self, x: Optional[float] = None, y: Optional[float] = None) -> None:
-        """Updates the position of this player while satisfying bounds.
+    def _bound(self) -> None:
+        """Bounds the player's position to satisfy bounds.
         """
-        if x is None:
-            x = self.position.x
-        if y is None:
-            y = self.position.y
-
-        self.position.x = x
-        self.position.y = y
         self.bounds.bound_position(self.position, self.RADIUS)
 
-    def set_position(self, position: Position) -> None:
+    def set_position(self, position: Vector) -> None:
         """Sets the position of this player.
         """
-        self._update_position(position.x, position.y)
+        self.position = position.duplicate()
+        self._bound()
 
     def set_bounds(self, bounds: Bounds) -> None:
         """Sets the bounds of this player.
         """
         self.bounds = bounds
-        self._update_position()
+        self._bound()
 
-    def move(self, raw_input: Tuple[float, float], delta_time: float) -> None:
+    def move(self, direction: Vector, delta_time: float) -> None:
         """Move the player in the direction specified by the <raw_input> and with the given <delta_time> modifier.
 
         The <raw_input> is a tuple of (x, y) input floats. The <delta_time> is the time in seconds
         since the last frame update.
         """
-        self._update_position(self.position.x + self.speed * delta_time * raw_input[0],
-                              self.position.y + self.speed * delta_time * raw_input[1])
+        self.position += Vector(1, 1) * direction * self.speed * delta_time
+        self._bound()
 
-    def shoot(self, direction: Direction) -> Optional[Bullet]:
+    def shoot(self, direction: Vector) -> Optional[Bullet]:
         """Shoots a bullet in the given <direction> and returns the shot bullet.
         """
-        if time.time() < self.last_shot_time + (1 / self.firerate):
+        if time.time() < self.last_shot_time + (1 / self.firerate) or direction == Vector.zero():
             return None
 
         self.last_shot_time = time.time()
-        origin = Position(self.position.x + direction.value[0] * (self.RADIUS + Bullet.RADIUS + 1),
-                          self.position.y + direction.value[1] * (self.RADIUS + Bullet.RADIUS + 1))
+        origin = Vector(1, 1) * self.position + direction * (self.RADIUS + Bullet.RADIUS + 1)
         return Bullet(origin, direction, self.damage, config.DEFAULT_BULLET_SPEED)
 
     def hit(self, bullet: Bullet) -> None:
