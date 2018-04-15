@@ -98,23 +98,29 @@ class Player(Element):
     HURT_COLOR: pygame.Color = pygame.Color("indianred")
     RADIUS: int = 15
 
+    DRAG = 1000
+
     damage: int
     max_health: int
     health: int
 
-    speed: int
+    acceleration: int
     firerate: int
 
     last_shot_time: float
     position: Vector
+    velocity: Vector
     bounds: Bounds
     strategy: Strategy
 
     color: pygame.Color
 
     def __init__(self, player_id: str,
-                 damage: int, speed: int, max_health: int, firerate: int, strategy: Strategy) -> None:
-        """Initializes a new player <player_id> with the given <damage>, <speed>, <max_health> and <firerate>.
+                 acceleration: float, max_speed: float,
+                 damage: float, firerate: float, max_health: float,
+                 strategy: Strategy) -> None:
+        """Initializes a new player <player_id> with the given <damage>, <acceleration>, <max_speed>,
+         <max_health> and <firerate>.
         Can also take a <strategy> that determines how the player will play.
         """
         self._player_id = player_id
@@ -123,11 +129,13 @@ class Player(Element):
         self.max_health = max_health
         self.health = self.max_health
 
-        self.speed = speed
+        self.acceleration = acceleration
+        self.max_speed = max_speed
         self.firerate = firerate
 
         self.last_shot_time = time.time()
         self.position = Vector(0, 0)
+        self.velocity = Vector(0, 0)
         self.bounds = Bounds()
         self.strategy = strategy
 
@@ -149,6 +157,30 @@ class Player(Element):
         """
         self.bounds.bound_position(self.position, self.RADIUS)
 
+    def _bound_move(self, delta_position: Vector) -> None:
+        """Bounds the player's movement <delta_position> in-place to not exceed boundaries.
+        """
+        if self.bounds.x_min is not None:
+            x_min_padding = self.bounds.x_min - self.position.x + self.RADIUS
+            if delta_position.x < x_min_padding:
+                delta_position.x = x_min_padding
+                self.velocity.x = 0
+        if self.bounds.x_max is not None:
+            x_max_padding = self.bounds.x_max - self.position.x - self.RADIUS
+            if delta_position.x > x_max_padding:
+                delta_position.x = x_max_padding
+                self.velocity.x = 0
+        if self.bounds.y_min is not None:
+            y_min_padding = self.bounds.y_min - self.position.y + self.RADIUS
+            if delta_position.y < y_min_padding:
+                delta_position.y = y_min_padding
+                self.velocity.y = 0
+        if self.bounds.y_max is not None:
+            y_max_padding = self.bounds.y_max - self.position.y - self.RADIUS
+            if delta_position.y > y_max_padding:
+                delta_position.y = y_max_padding
+                self.velocity.y = 0
+
     def set_position(self, position: Vector) -> None:
         """Sets the position of this player.
         """
@@ -162,13 +194,18 @@ class Player(Element):
         self._bound()
 
     def move(self, direction: Vector, delta_time: float) -> None:
-        """Move the player in the direction specified by the <raw_input> and with the given <delta_time> modifier.
-
-        The <raw_input> is a tuple of (x, y) input floats. The <delta_time> is the time in seconds
-        since the last frame update.
+        """Move the player in the direction specified by the <direction> and with the given <delta_time> modifier.
         """
-        self.position += Vector(1, 1) * direction.normalize() * self.speed * delta_time
-        self._bound()
+        if direction == Vector.zero():
+            self.velocity -= self.velocity.normalize() * self.DRAG * delta_time
+        else:
+            self.velocity += direction.seminormalize(1) * self.acceleration * delta_time
+        self.velocity = self.velocity.seminormalize(self.max_speed)
+
+        delta_position = self.velocity * delta_time
+        self._bound_move(delta_position)
+
+        self.position += delta_position
 
     def shoot(self, direction: Vector) -> Optional[Bullet]:
         """Shoots a bullet in the given <direction> and returns the shot bullet.
@@ -177,7 +214,7 @@ class Player(Element):
             return None
 
         self.last_shot_time = time.time()
-        origin = Vector(1, 1) * self.position + direction * (self.RADIUS + Bullet.RADIUS + 1)
+        origin = Vector(1, 1) * self.position + direction.normalize() * (self.RADIUS + Bullet.RADIUS + 1)
         return Bullet(origin, direction, self.damage, config.DEFAULT_BULLET_SPEED)
 
     def hit(self, bullet: Bullet) -> None:

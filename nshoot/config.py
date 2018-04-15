@@ -21,8 +21,8 @@ DEFAULT_PLAYER_IDS: List[str] = ["p1", "p2"]
 DEFAULT_STRATEGIES: List[Strategy] = [UserInputStrategy(DEFAULT_PLAYER_IDS[0], MOVE_SOURCES[0], SHOOT_SOURCES[0]),
                                       SmartStrategy(DEFAULT_PLAYER_IDS[1])]
 
-DEFAULT_STATS = (10, 400, 100, 10)
-DEFAULT_PLAYER_STATS: List[Tuple[int, int, int, int]] = [(10, 600, 100, 10), DEFAULT_STATS]
+DEFAULT_STATS = (1000, 400, 10, 10, 100)
+DEFAULT_PLAYER_STATS: List[Tuple[int, int, int, int]] = [DEFAULT_STATS, DEFAULT_STATS]
 DEFAULT_BULLET_SPEED: int = 800
 
 REFRESH_RATE: int = 60

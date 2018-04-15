@@ -170,9 +170,10 @@ class GameView:
             if event.type == pygame.QUIT:
                 sys.exit()
 
-        pressed = pygame.key.get_pressed()
-        if any(pressed[key] for key in sum(config.SHOOT_SOURCES, ())):
-            pygame.mixer.Sound('bang.ogg').play()
+        if sys.platform == "darwin":
+            pressed = pygame.key.get_pressed()
+            if any(pressed[key] for key in sum(config.SHOOT_SOURCES, ())):
+                pygame.mixer.Sound('bang.ogg').play()
 
         self.surface.fill(self.COLOR)
         self.game.draw(self.surface)

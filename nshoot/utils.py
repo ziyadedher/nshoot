@@ -49,6 +49,11 @@ class Vector:
         """
         return Vector(self.x, self.y)
 
+    def seminormalize(self, magnitude: float) -> 'Vector':
+        """Returns a new vector in the same direction but with magnitude <magnitude> if and only if the vector has
+        magnitude more than <magnitude>. Otherwise returns the vector."""
+        return self * (magnitude / self.magnitude) if self.magnitude > magnitude else self
+
     def normalize(self) -> 'Vector':
         """Returns a new vector in the same direction but with magnitude 1, or the zero vector.
         """
